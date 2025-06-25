@@ -62,4 +62,3 @@ docker run -d \
 ```sh
 sh run.sh
 ```
-# file_split-server
