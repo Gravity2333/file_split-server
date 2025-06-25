@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>文件分片上传系统</title>
+  <style>
+    body,
+    html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+      background: #f4f6f9;
+      color: #333;
+    }
+
+    .layout {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+    }
+
+    .header {
+      background: linear-gradient(90deg, #409eff, #66b1ff);
+      color: white;
+      padding: 16px 24px;
+      font-size: 22px;
+      font-weight: bold;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .content {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      overflow: auto;
+    }
+
+    .container {
+      height: calc(100% - 40px);
+      background: white;
+      width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 0;
+      color: #409eff;
+      font-size: 24px;
+    }
+
+    .top-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .upload-btn,
+    .download-btn {
+      padding: 10px 20px;
+      background: #409eff;
+      color: white;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s ease;
+    }
+
+    .download-btn-text {
+      background: #409eff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .upload-btn:hover,
+    .download-btn:hover {
+      background: #66b1ff;
+    }
+
+    .table-wrapper {
+      overflow: auto;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 800px;
+      font-size: 14px;
+    }
+
+    thead {
+      background: #409eff;
+      color: white;
+      position: sticky;
+      top: 0;
+    }
+
+    th,
+    td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+
+    tbody tr:hover {
+      background: #f1faff;
+    }
+
+    progress {
+      width: 100px;
+      height: 10px;
+      appearance: none;
+      -webkit-appearance: none;
+      border-radius: 5px;
+      overflow: hidden;
+      background: #eee;
+    }
+
+    progress::-webkit-progress-bar {
+      background-color: #eee;
+    }
+
+    progress::-webkit-progress-value {
+      background: linear-gradient(90deg, #409eff, #66b1ff);
+    }
+
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast {
+      background: white;
+      color: #409eff;
+      padding: 12px 20px;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      min-width: 180px;
+      opacity: 0;
+      transform: translateX(100%);
+      animation: slideIn 0.4s forwards, fadeOut 0.4s forwards 3s;
+      font-size: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .toast::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 4px;
+      background: #66b1ff;
+    }
+
+    @keyframes slideIn {
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        transform: translateX(100%);
+      }
+    }
+
+    @media (max-width: 600px) {
+      table {
+        min-width: unset;
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <script defer src="/web-static/spark-md5.js"></script>
+  <script defer src="/web-static/splitAndUploadFile.js"></script>
+  <script defer src="/web-static/splitAndDownloadFile.js"></script>
+  <script defer src="/web-static/streamsaver.js"></script>
+
+  <div class="layout">
+    <div class="header">文件分片上传系统</div>
+
+    <div class="content">
+      <div class="container">
+        <div class="top-actions">
+          <input type="file" id="file-uploader" class="upload-btn" onchange="validateAndUpload(event)">
+          <button id="pause-btn" class="download-btn" onclick="pauseUpload()">暂停上传</button>
+          <button id="resume-btn" class="download-btn" onclick="resumeUpload()">继续上传</button>
+          <progress id="upload-progress" value="0" max="100" style="margin-top:15px"></progress>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>文件名称</th>
+                <th>尺寸</th>
+                <th>类型</th>
+                <th>上传时间</th>
+                <th>下载进度条</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="file-list"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <script>
+    function showToast(message, timeout = 4000) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerText = message;
+      container.appendChild(toast);
+
+      if (timeout > 0) {
+        setTimeout(() => {
+          toast.remove();
+        }, timeout);
+      }
+
+      return () => {
+        toast.remove();
+      }
+    }
+
+    function isValidFileName(name) {
+      return !(/[\\/:*?"<>|]/.test(name));
+    }
+
+    function validateAndUpload(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      if (!isValidFileName(file.name)) {
+        showToast("❌ 文件名包含非法字符，不能上传！");
+        return;
+      }
+      splitAndUploadFile(e, 2 * 1024 * 1024);
+    }
+
+    function pauseUpload() {
+      if (window.uploadController) {
+        window.uploadController.abort();
+        showToast("⏸️ 上传已暂停");
+      }
+    }
+
+    function resumeUpload() {
+      if (window.retry) {
+        window.retry();
+        showToast("▶️ 继续上传中...");
+      }
+    }
+
+    function formatSize(bytes) {
+      if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+      if (bytes >= 1024) return (bytes / 1024).toFixed(2) + ' KB';
+      return bytes + ' B';
+    }
+
+    function decodeFileName(encoded) {
+      try {
+        const json = atob(encoded.replace('.file', ''));
+        const obj = JSON.parse(json);
+        return obj.filename || encoded;
+      } catch {
+        return encoded;
+      }
+    }
+
+    async function updateTable() {
+      const fileData = await fetch('http://127.0.0.1:10087/upload/list').then(res => res.json());
+      const tbody = document.getElementById('file-list');
+      tbody.innerHTML = '';
+
+      fileData.forEach(file => {
+        const isEncoded = file.name.endsWith('.file');
+        const displayName = isEncoded ? decodeFileName(file.name) : file.name;
+        const id = Math.random().toString(36).substring(2, 10);
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+      <td>${displayName}</td>
+      <td>${formatSize(file.size)}</td>
+      <td>${file.isDirectory ? 'Folder' : 'File'}</td>
+      <td>${file.birthtime || '未知'}</td>
+      <td><progress id="progress_${id}" value="0" max="100"></progress></td>
+      <td>
+        <button class="download-btn-text" id="pause_${id}">暂停</button>
+        <button class="download-btn-text" id="resume_${id}">继续</button>
+        <button 
+        class="download-btn-text" 
+        onclick="download('${file.name}', '${file.hash}','${id}')">
+          下载
+        </button>
+           <button 
+        class="download-btn-text" 
+        style="background-color:red"
+        onclick="deleteFile('${file.hash}')">
+          删除
+        </button>
+      </td>
+    `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function deleteFile(hash) {
+      await fetch( `http://127.0.0.1:10087/delete?hash=${encodeURIComponent(
+        hash
+      )}`,)
+
+      updateTable();
+    }
+
+
+    function downloadLatest() {
+      showToast("🚀 正在下载最新文件...");
+    }
+
+    window.updateTable = updateTable;
+    updateTable();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "file_split_demo",
+  "version": "1.0.0",
+  "description": "一个文件切片上传，秒传，断点续传的 DEMO 例子，用来学习原理。",
+  "main": "index.js",
+  "scripts": {
+    "start": "sh run.sh",
+    "start:docker": "docker build -t file-split-system .",
+    "start:docker-arm": "docker buildx build --platform linux/amd64 -t file-split-system:latest .",
+    "start:compose": "docker run -d --restart unless-stopped -p 10087:10087 --name file-split-system file-split-system"
+  },
+  "keywords": [],
+  "author": "Gravity2333",
+  "license": "ISC"
+}

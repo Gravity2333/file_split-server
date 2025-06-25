@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  file-split-system:
+    build: .
+    ports:
+      - "10087:10087"
+    restart: unless-stopped
+    # 如果需要环境变量可以加下面一行
+    # environment:
+    #   - NODE_ENV=production
