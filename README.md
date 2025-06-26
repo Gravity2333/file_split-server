@@ -38,7 +38,7 @@
 ```sh
 npm run start         # 本地运行服务（调用 run.sh）
 npm run start:docker  # 构建 amd64 镜像
-npm run start:docker-arm  # 构建指定平台镜像（amd64）
+npm run start:docker-arm  # 如果你的构建环境是ARM 比如Apple M 等 请使用此命令（amd64）
 npm run start:compose # 运行容器，映射端口 10087
 
 ```

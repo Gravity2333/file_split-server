@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "sh run.sh",
-    "start:docker": "docker build -t file-split-system .",
+    "start:docker": "docker build --platform linux/amd64 -t file-split-system .",
     "start:docker-arm": "docker buildx build --platform linux/amd64 -t file-split-system:latest .",
     "start:compose": "docker run -d --restart unless-stopped -p 10087:10087 --name file-split-system file-split-system"
   },
