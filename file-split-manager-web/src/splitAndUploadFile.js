@@ -122,7 +122,7 @@ async function _checkAndUpload(workResults, filename, resume = false) {
           formData.append("uploadId", uploadId);
           formData.append("index", chunk.index);
           formData.append("chunkContent", chunk.content);
-          return fetch("http://127.0.0.1:10087/upload", {
+          return fetch("/upload", {
             method: "POST",
             body: formData,
             signal: uploadController.signal,
@@ -134,7 +134,7 @@ async function _checkAndUpload(workResults, filename, resume = false) {
         })
     );
 
-    await fetch("http://127.0.0.1:10087/upload/merge", {
+    await fetch("/upload/merge", {
       method: "POST",
       body: JSON.stringify({
         uploadId,
@@ -153,7 +153,7 @@ async function _checkAndUpload(workResults, filename, resume = false) {
 
 /** 文件秒传处理 检查文件在不在 */
 async function _checkExistFile(fileHash, chunkList, filename) {
-  return await fetch("http://127.0.0.1:10087/upload/check", {
+  return await fetch("/upload/check", {
     method: "POST",
     headers: {
       "content-type": "application/json",

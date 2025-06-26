@@ -303,7 +303,7 @@
     }
 
     async function updateTable() {
-      const fileData = await fetch('http://127.0.0.1:10087/upload/list').then(res => res.json());
+      const fileData = await fetch('/upload/list').then(res => res.json());
       const tbody = document.getElementById('file-list');
       tbody.innerHTML = '';
 
@@ -340,7 +340,7 @@
     }
 
     async function deleteFile(hash) {
-      await fetch( `http://127.0.0.1:10087/delete?hash=${encodeURIComponent(
+      await fetch( `/delete?hash=${encodeURIComponent(
         hash
       )}`,)
 

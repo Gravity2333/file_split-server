@@ -10,7 +10,7 @@ async function download(name, hash, id, loaded = 0) {
     const headers = loaded > 0 ? { Range: `bytes=${loaded}-` } : {};
 
     const response = await fetch(
-      `http://127.0.0.1:10087/download?hash=${encodeURIComponent(
+      `/download?hash=${encodeURIComponent(
         hash
       )}&filename=${encodeURIComponent(name)}`,
       { method: "GET", headers, signal: controller.signal }
