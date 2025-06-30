@@ -1,5 +1,6 @@
 const streamWriterMap = new Map(); // 以文件名为 key 复用 writer
 
+/** 切片下载文件 */
 async function download(name, hash, id, loaded = 0) {
   try {
     const progress = document.getElementById("progress_" + id);
@@ -10,9 +11,9 @@ async function download(name, hash, id, loaded = 0) {
     const headers = loaded > 0 ? { Range: `bytes=${loaded}-` } : {};
 
     const response = await fetch(
-      `/download?hash=${encodeURIComponent(
-        hash
-      )}&filename=${encodeURIComponent(name)}`,
+      `/download?hash=${encodeURIComponent(hash)}&filename=${encodeURIComponent(
+        name
+      )}`,
       { method: "GET", headers, signal: controller.signal }
     );
 
@@ -55,10 +56,10 @@ async function download(name, hash, id, loaded = 0) {
       const { done, value } = await streamReader.read();
       currentLoaded += value?.length || 0;
       if (done) {
-        console.log('write end')
+        console.log("write end");
         writer.close();
         streamWriterMap.delete(name);
-        console.log(streamWriterMap)
+        console.log(streamWriterMap);
         break;
       }
       await writer.write(value);

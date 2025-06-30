@@ -1,11 +1,15 @@
 /** worker数量 */
 showToast("💻 当前可用 CPU 核心数 " + navigator.hardwareConcurrency);
+/** 设置工作 Worker的数量 */
 const HASH_WORKER_NUMBER = navigator.hardwareConcurrency;
+/** 设置 前 中 后 三个Worker 作为采样Worker */
 const SAMPLING_WORKER = [
   0,
   Math.ceil((HASH_WORKER_NUMBER - 1) / 2),
   HASH_WORKER_NUMBER - 1,
 ];
+
+/** 进度条DOM */
 const progress = document.querySelector("#upload-progress");
 
 /** 切分并且上传文件 */
@@ -67,14 +71,20 @@ async function _sliceFileAndHash(file, chunkSize = 20 * 1024 * 1025) {
     /** promise.all 处理所有结束 */
     const workResults = await Promise.all(workResultPromises);
     removeUploadToast();
-    await _checkAndUpload(workResults, file.name);
+    await _UploadFileIfNoExist(workResults, file.name);
   } catch (e) {
     console.log(e);
   }
 }
 
-async function _checkAndUpload(workResults, filename, resume = false) {
-  const removeUploadToast = showToast("文件上传中🌍",-1);
+/**
+ * 检查文件是否存在并且完成上传
+ * @param {*} workResults
+ * @param {*} filename
+ * @param {*} resume
+ */
+async function _UploadFileIfNoExist(workResults, filename, resume = false) {
+  const removeUploadToast = showToast("文件上传中🌍", -1);
   const chunksList = [];
   /** 创建 spark */
   const spark = new SparkMD5.ArrayBuffer();
@@ -87,12 +97,12 @@ async function _checkAndUpload(workResults, filename, resume = false) {
   const fileHash = spark.end();
   const chunkList = chunksList.map((chunk) => chunk.index);
 
-  const { isUploaded, requireChunks, uploadId } = await _checkExistFile(
+  const { isUploaded, requireChunks, uploadId } = await _checkFileIsExist(
     fileHash,
     chunkList,
     filename
   );
-  removeUploadToast()
+  removeUploadToast();
   if (isUploaded) {
     showToast(filename + "文件已经存在 📃");
   } else {
@@ -103,7 +113,12 @@ async function _checkAndUpload(workResults, filename, resume = false) {
     let uploaded = 0;
     window.uploadController = new AbortController();
     window.uploadController.signal.addEventListener("abort", () => {
-      window.retry = _checkAndUpload.bind(this, workResults, filename, true);
+      window.retry = _UploadFileIfNoExist.bind(
+        this,
+        workResults,
+        filename,
+        true
+      );
     });
 
     /** 需要分片上传 */
@@ -145,14 +160,16 @@ async function _checkAndUpload(workResults, filename, resume = false) {
     }).then((res) => res.text());
     window.updateTable();
     showToast("文件上传完成！✅");
-    window.retry = ()=>{
+    window.retry = () => {
       showToast("无可重试上传!");
-    }
+    };
   }
 }
 
-/** 文件秒传处理 检查文件在不在 */
-async function _checkExistFile(fileHash, chunkList, filename) {
+/** 文件秒传处理
+ * 通过 Hash 检查文件是否存在
+ */
+async function _checkFileIsExist(fileHash, chunkList, filename) {
   return await fetch("/upload/check", {
     method: "POST",
     headers: {
