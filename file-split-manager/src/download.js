@@ -11,6 +11,7 @@ async function downloadFile(query, req, res) {
 
     const stat = await fs.promises.stat(filePath);
 
+    /** 不支持断点续传的情况 */
     if (!range) {
       res.writeHead(200, {
         "Access-Control-Allow-Origin": "*",
@@ -27,14 +28,14 @@ async function downloadFile(query, req, res) {
       const readable = fs.createReadStream(filePath); // ✅ 流式传输
       readable.pipe(res);
     } else {
+      /** 支持断点续传的情况 */
       const downloadRangeExactReg = /bytes=(\d*)-(\d*)/;
       const matchResult = downloadRangeExactReg.exec(range);
       const start = +(matchResult[1] || 0);
       const end = Math.min(+(matchResult[2] || stat.size - 1), stat.size - 1); // ✅ 确保不越界
 
-      // checkRange
+      // 客户端传递Range错误，无法切分
       if (end < start) {
-        // err range
         res.writeHead(416, {
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Headers": "*",
@@ -47,10 +48,10 @@ async function downloadFile(query, req, res) {
         return;
       }
 
-      // range 正确
+      // 客户端传递Range范围正确
       const readable = fs.createReadStream(filePath, { start, end });
 
-      /** 206 Partial Content */
+      /** 返回 206 Partial Content */
       res.writeHead(206, {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Headers": "*",
@@ -67,7 +68,7 @@ async function downloadFile(query, req, res) {
       readable.pipe(res);
     }
   } catch (err) {
-    res.end()
+    res.end();
     console.log(err);
   }
 }

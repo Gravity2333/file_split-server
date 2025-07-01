@@ -118,7 +118,7 @@ async function mergeChunkFiles(req, res) {
     );
     let size = 0;
     for (let i = 0; i < tmpFileList.length; i++) {
-      const tmpFileName = tmpFileList[i];
+      const tmpFileName = `${i}.tempFile`;
       const tmpFilePath = path.resolve(tmpFireDirPath, tmpFileName);
       const buffer = await fs.promises.readFile(tmpFilePath);
       await fs.promises.appendFile(completeFPath, buffer);
